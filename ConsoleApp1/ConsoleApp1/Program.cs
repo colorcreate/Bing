@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using Newtonsoft.Json;
+using System.Net;
 
 namespace ConsoleApp1
 {
@@ -18,8 +19,17 @@ namespace ConsoleApp1
 
             var fileContents = DeserializedPlayer(fileName);
 
-            foreach(var line in fileContents)
-                Console.WriteLine(line.first_name);
+            //foreach(var line in fileContents)
+            //    Console.WriteLine(line.firstName);
+
+            //Console.WriteLine(GetNewFromPlayer("Yulius"));
+
+            var player = GetNewFromPlayer("Alvin sumara");
+            foreach(var name in player)
+            {
+                Console.WriteLine("Tanggal : {0}", name.datePublished);
+                Console.WriteLine("URL : {0}", name.url);
+            }
         }
         public static List<GameResults> ReadFootballResults (string fileName)
         {
@@ -83,6 +93,37 @@ namespace ConsoleApp1
 
                 return players;
         }
+
+        public static string GetGoogleHomePage()
+        {
+            var webClient = new WebClient();
+            byte[] googleHome = webClient.DownloadData("https://www.dotnetperls.com/static"); //ambil HTML input lewat bite[]
+
+            using (var stream = new MemoryStream(googleHome))//masukin data ke suatu variable
+            using (var reader = new StreamReader(stream))//di terjemahin di sini
+            {
+                return reader.ReadToEnd();// di baca di sini
+            }
+        }
+
+        public static List<NewsResult> GetNewFromPlayer(string playerName)
+        {
+            var results = new List<NewsResult>();
+            var webClient = new WebClient();
+            webClient.Headers.Add("Ocp-Apim-Subscription-Key", "a19b42b1aec44371aede1c06414907f0");
+            byte[] playerNews = webClient.DownloadData(string.Format("https://api.cognitive.microsoft.com/bing/v5.0/news/search?q={0}&mkt=en-us", playerName)); //ambil HTML input lewat bite[]
+            var serializer = new JsonSerializer();
+
+            using (var stream = new MemoryStream(playerNews))//masukin data ke suatu variable
+            using (var reader = new StreamReader(stream))//di terjemahin di sini
+            using (var jsonReader = new JsonTextReader(reader))
+            {
+                results = serializer.Deserialize<NewsSearch>(jsonReader).newsResults;
+            }
+
+            return results;
+        }
     }
 
 }
+
